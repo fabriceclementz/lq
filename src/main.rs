@@ -28,7 +28,7 @@ fn main() -> Result<()> {
     let decoder = Decoder::new(
         Box::new(LineReader::new(reader)),
         InputFormat::from_str(&args.input_format)?,
-    );
+    )?;
 
     let mut transformer = Transformer::new(
         Box::new(decoder),
