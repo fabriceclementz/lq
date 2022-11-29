@@ -14,7 +14,7 @@ pub struct Decoder {
 
 impl Decoder {
     pub fn new(inner: LineIter, format: InputFormat) -> Result<Self> {
-        let re = format.get_regex()?;
+        let re = format.try_into()?;
         Ok(Self { inner, re })
     }
 }

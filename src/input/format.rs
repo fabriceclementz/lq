@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use regex::Regex;
 
-use crate::error::{Error, Result};
+use crate::error::Error;
 
 pub enum InputFormat {
     Regex,
@@ -23,8 +23,10 @@ impl FromStr for InputFormat {
     }
 }
 
-impl InputFormat {
-    pub fn get_regex(&self) -> Result<Regex> {
+impl TryInto<Regex> for InputFormat {
+    type Error = Error;
+
+    fn try_into(self) -> std::result::Result<Regex, Self::Error> {
         let re = match self {
             InputFormat::Regex => todo!(),
             InputFormat::Apache => todo!(),
