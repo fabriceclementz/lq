@@ -20,7 +20,7 @@ cat nginx.log | lq nginx -c json > logs.json
 cat nginx.log | lq nginx -c csv > logs.csv
 
 # convert NGINX logs to JSON with a map function
-cat nginx.log | lq nginx -c json -m 'ts:ts:"%Y-%m-%d", ip:str, method:str, bytes:int, status_code:int'
+cat nginx.log | lq nginx -transform 'map { ts:ts:"%Y-%m-%d", ip:str, method:str, bytes:int, status_code:int } | json'
 ```
 
 ## Configuration file
@@ -29,5 +29,5 @@ cat nginx.log | lq nginx -c json -m 'ts:ts:"%Y-%m-%d", ip:str, method:str, byte
 # patterns in /etc/lq.conf
 nginx: ^(?P<ip>\d{1,3}.\d{1,3}.\d{1,3}.\d{1,3})\s-\s-\s\[(?P<ts>.+)]\s"(?P<method>GET|POST|PUT|HEAD|PATCH|TRACE|OPTIONS|PURGE)\s(?P<uri>[^\s]*)\s(?P<protocol>[^"]*)"\s(?P<status_code>\d{3})\s
 apache:
-varnish:
+varnish: ^(?P<ip>\d{1,3}\.\d{1,3}.\d{1,3}.\d{1,3})\s-\s-\s\[(?P<ts>.+)\]\s"(?P<method>GET|POST|PUT|PATCH|TRACE|OPTIONS|PURGE)\s(?P<uri>http(s?)://[^\s]*)\s(?P<proto>[^\\/]*)/(?P<proto_version>[^"]*)"\s(?P<status_code>\d{3})\s(?P<bytes>\d+)\s
 ```

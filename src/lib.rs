@@ -1,3 +1,4 @@
+pub mod ast;
 pub mod decoder;
 pub mod error;
 pub mod input;
