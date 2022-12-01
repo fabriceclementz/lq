@@ -1,3 +1,5 @@
+use std::{iter::Peekable, str::Chars};
+
 #[derive(Debug, PartialEq, Eq)]
 enum Token {
     Map,
@@ -7,6 +9,8 @@ enum Token {
     Comma,
     Field(String),
     Type(ValueType),
+    Whitespace,
+    Pipe,
     EOF,
 }
 
@@ -32,26 +36,45 @@ impl Lexer {
 
     pub fn lex(&mut self) -> Vec<Token> {
         let mut tokens = vec![];
+        let mut peekable = self.program.chars().peekable();
 
-        let mut chars = self.program.chars();
-
-        while let Some(ch) = chars.next() {
-            match ch {
-                '{' => tokens.push(Token::LBracket),
-                '}' => tokens.push(Token::RBracket),
-                ':' => tokens.push(Token::Colon),
-                ',' => tokens.push(Token::Comma),
-                _ => {}
-            }
-
-            self.pos += 1;
+        while let Some(token) = self.next_token(&mut peekable) {
+            tokens.push(token);
         }
-
         tokens
     }
 
-    fn next_token(&self) -> Option<Token> {
-        None
+    fn next_token(&self, peekable: &mut Peekable<Chars>) -> Option<Token> {
+        match peekable.peek() {
+            Some(ch) if ch.is_whitespace() => self.consume_and_return(peekable, Token::Whitespace),
+            Some(ch) if ch.is_alphabetic() => {
+                let mut word = String::new();
+                while let Some(c) = peekable.peek() {
+                    if c.is_whitespace() {
+                        let tok = match word.as_str() {
+                            "map" => Token::Map,
+                            _ => Token::Field(word),
+                        };
+                        return Some(tok);
+                    } else {
+                        word.push_str(&c.to_string());
+                        peekable.next();
+                    }
+                }
+                None
+            }
+            Some('{') => self.consume_and_return(peekable, Token::LBracket),
+            Some('}') => self.consume_and_return(peekable, Token::RBracket),
+            Some(':') => self.consume_and_return(peekable, Token::Colon),
+            Some(',') => self.consume_and_return(peekable, Token::Comma),
+            Some('|') => self.consume_and_return(peekable, Token::Pipe),
+            _ => None,
+        }
+    }
+
+    fn consume_and_return(&self, chars: &mut Peekable<Chars>, t: Token) -> Option<Token> {
+        chars.next();
+        Some(t)
     }
 }
 
@@ -61,10 +84,22 @@ mod test {
 
     #[test]
     fn lex_program() {
-        let mut lexer = Lexer::new("{}:,");
+        let mut lexer = Lexer::new("map { timestamp bytes }:,");
         let tokens = lexer.lex();
 
-        let expected = vec![Token::LBracket, Token::RBracket, Token::Colon, Token::Comma];
+        let expected = vec![
+            Token::Map,
+            Token::Whitespace,
+            Token::LBracket,
+            Token::Whitespace,
+            Token::Field("timestamp".into()),
+            Token::Whitespace,
+            Token::Field("bytes".into()),
+            Token::Whitespace,
+            Token::RBracket,
+            Token::Colon,
+            Token::Comma,
+        ];
         assert_eq!(expected, tokens);
     }
 
